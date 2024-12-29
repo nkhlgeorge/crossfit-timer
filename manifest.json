@@ -2,7 +2,7 @@
 {
     "name": "CrossFit Timer",
     "short_name": "CF Timer",
-    "start_url": ".",
+    "start_url": "/index.html", // or "./index.html" if not at root
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ff9999",
