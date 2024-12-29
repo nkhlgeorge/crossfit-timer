@@ -73,6 +73,20 @@
             max-width: 600px;
             width: 100%;
         }
+
+         /*  NEW CSS improvements go here  */
+        button:active {
+            background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(1px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        #roundHistory { /* Assuming you have an element with this ID for round history*/
+            max-height: 20vh; 
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
