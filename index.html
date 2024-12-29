@@ -99,9 +99,11 @@
         <button id="resetBtn">Reset</button>
         <button id="stopBtn" disabled>Stop</button>
     </div>
+ 
     <div id="summary">
-        <div id="summaryContent"></div>
-        <button id="closeSummaryBtn">Close</button>
+    <div id="summaryContent"></div>
+    <button id="closeSummaryBtn">Close</button>
+    <button id="shareBtn">Share Results</button> <div id="shareBtn">Share Results</div>
     </div>
 
     <script>
@@ -223,6 +225,40 @@
       });
 
       resetRound();  // Call resetRound after DOM is ready
+
+    document.getElementById('shareBtn').addEventListener('click', shareResults);
+
+
+function shareResults() {
+    const summaryText = document.getElementById('summaryContent').innerText; // Get the text content
+
+    // Check if the Web Share API is supported
+    if (navigator.share) {
+        navigator.share({
+            title: 'My CrossFit Workout Summary',
+            text: summaryText
+        })
+        .then(() => console.log('Successful share'))
+        .catch((error) => console.log('Error sharing', error));
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        copyToClipboard(summaryText);
+        alert('Workout summary copied to clipboard! You can now paste it to share.');
+        // or use a third-party library to do this
+    }
+}
+
+
+
+function copyToClipboard(text) {  // Fallback copy function
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+}
+
 
       // Service worker registration (stays inside DOMContentLoaded if it was there before)
       if ('serviceWorker' in navigator) {
