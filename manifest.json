@@ -2,7 +2,7 @@
 {
     "name": "CrossFit Timer",
     "short_name": "CF Timer",
-    "start_url": "/index.html",
+    "start_url": "/crossfit-timer/index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ff9999",
