@@ -188,31 +188,36 @@
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        document.body.addEventListener('click', changeRound);
-        document.getElementById('undoBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            undoRound();
-        });
-        document.getElementById('resetBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            resetRound();
-        });
-        document.getElementById('stopBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            stopWorkout();
-        });
-        document.getElementById('closeSummaryBtn').addEventListener('click', () => {
-            document.getElementById('summary').style.display = 'none';
-        });
+      // new gemini code
 
-        resetRound();
+      document.addEventListener('DOMContentLoaded', function() {  // <--- Crucial!
+      document.body.addEventListener('click', changeRound);
+      document.getElementById('undoBtn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          undoRound();
+      });
+      document.getElementById('resetBtn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          resetRound();
+      });
+      document.getElementById('stopBtn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          stopWorkout();
+      });
+      document.getElementById('closeSummaryBtn').addEventListener('click', () => {
+          document.getElementById('summary').style.display = 'none';
+      });
 
-// Add this at the end of your script
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then((reg) => console.log('Service worker registered', reg))
-                .catch((err) => console.log('Service worker not registered', err));
+      resetRound();  // Call resetRound after DOM is ready
 
-    </script>
+      // Service worker registration (stays inside DOMContentLoaded if it was there before)
+      if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js') // Or the correct path
+              .then((reg) => console.log('Service worker registered', reg))
+              .catch((err) => console.log('Service worker not registered', err));
+      }
+
+  }); // <--- Close the DOMContentLoaded listener
+</script>
 </body>
 </html>
