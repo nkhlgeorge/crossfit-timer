@@ -1,11 +1,10 @@
 ```javascript
-const CACHE_NAME = 'crossfit-timer-v1';
 const assets = [
-    '/',
-    '/index.html',
-    '/manifest.json',
-    '/icon-192.png',
-    '/icon-512.png'
+    './',          // Relative to sw.js
+    './index.html',
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 self.addEventListener('install', event => {
