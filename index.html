@@ -180,25 +180,7 @@
             document.getElementById('stopBtn').disabled = false;
         }
 
-    function stopWorkout() {
-    clearInterval(timerInterval);
-    const now = Date.now();
-    const lastRoundTime = (now - lastTapTime) / 1000;  // Calculate the last round time
-    roundTimes.push(lastRoundTime);
-    const totalTime = (now - startTime) / 1000;
-    let summaryHTML = `<h2>Workout Summary</h2>
-                        <p>Total Time: ${totalTime.toFixed(2)} seconds</p>
-                        <h3>Round Times:</h3>
-                        <ul>`;
-    for (let i = 0; i < roundTimes.length; i++) {
-        summaryHTML += `<li>Round ${i + 1}: ${roundTimes[i].toFixed(2)} seconds</li>`;
-    }
-    summaryHTML += `</ul>`;
-    document.getElementById('summaryContent').innerHTML = summaryHTML;
-    document.getElementById('summary').style.display = 'flex';
-    summaryDisplayed = true;
-}
-        
+      
         function updateTimer() {
             const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
             const minutes = Math.floor(totalSeconds / 60);
@@ -207,7 +189,7 @@
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-         document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
      let summaryDisplayed = false;
      document.body.addEventListener('click', (event) => {
                 if (!summaryDisplayed) {
@@ -240,11 +222,26 @@
            document.getElementById('shareBtn').addEventListener('click', shareResults);
 
             resetRound();
-          function stopWorkout() { // stopWorkout *inside* DOMContentLoaded!
+          function stopWorkout() { 
                 clearInterval(timerInterval);
-                // ... (rest of your stopWorkout function code)
+                const now = Date.now();
+                const lastRoundTime = (now - lastTapTime) / 1000;  
+                roundTimes.push(lastRoundTime);                  
+                const totalTime = (now - startTime) / 1000;
+                // ... (Generate summaryHTML as corrected in previous response)
+              //  Generate the summaryHTML here:
+    let summaryHTML = `<h2>Workout Summary</h2>
+                       <p>Total Time: ${totalTime.toFixed(2)} seconds</p>
+                       <h3>Round Times:</h3>
+                       <ul>`;
+    for (let i = 0; i < roundTimes.length; i++) {
+        summaryHTML += `<li>Round ${i + 1}: ${roundTimes[i].toFixed(2)} seconds</li>`;
+    }
+    summaryHTML += `</ul>`;
+              
+                document.getElementById('summaryContent').innerHTML = summaryHTML;
                 document.getElementById('summary').style.display = 'flex';
-                summaryDisplayed = true; // Set the flag *after* making summary visible
+                summaryDisplayed = true;
             }
          
 function shareResults() {
