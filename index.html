@@ -90,20 +90,22 @@
     </style>
 </head>
 <body>
-    <div id="counter">1</div>
+   <div id="counter">1</div>
     <div id="timer">00:00</div>
     <div id="lastRoundTime"></div>
     <div id="startPrompt">Tap anywhere to start</div>
-    <div class="controls">
+
+    <div class="controls">  <--- Opening div for controls
         <button id="undoBtn" disabled>Undo</button>
         <button id="resetBtn">Reset</button>
         <button id="stopBtn" disabled>Stop</button>
-   
+    </div>  <--- Closing div for controls.  Summary should be *outside* this
 
-    <div id="summary">
-    <div id="summaryContent"></div>
-    <button id="closeSummaryBtn">Close</button>
-    <button id="shareBtn">Share Results</button>  <-- Only this line
+
+    <div id="summary">  <--- Summary is now a sibling to controls, not a child
+        <div id="summaryContent"></div>
+        <button id="closeSummaryBtn">Close</button>
+        <button id="shareBtn">Share Results</button>  
     </div>
 
     <script>
@@ -205,33 +207,48 @@
         }
 
       // new gemini code
+     document.addEventListener('DOMContentLoaded', function() {
+     let summaryDisplayed = false;
+     document.body.addEventListener('click', (event) => {
+                if (!summaryDisplayed) {
+                    changeRound(); 
+                }
+            });
+      
+          document.getElementById('undoBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                undoRound();
+            });
+            document.getElementById('resetBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetRound();
+            });
+            document.getElementById('stopBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                stopWorkout(); //Call stopWorkout here
+            });
+            document.getElementById('summary').addEventListener('click', (e) => {
+                e.stopPropagation(); //Prevent clicks on summary from going to body
+            });
 
-      document.addEventListener('DOMContentLoaded', function() {  // <--- Crucial!
-      document.body.addEventListener('click', changeRound);
-      document.getElementById('undoBtn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          undoRound();
-      });
-      document.getElementById('resetBtn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          resetRound();
-      });
-      document.getElementById('stopBtn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          stopWorkout();
-      });
-      document.getElementById('closeSummaryBtn').addEventListener('click', () => {
-          document.getElementById('summary').style.display = 'none';
-      });
+            
+            document.getElementById('closeSummaryBtn').addEventListener('click', () => {
+                document.getElementById('summary').style.display = 'none';
+                summaryDisplayed = false;
+            });
 
-      resetRound();  // Call resetRound after DOM is ready
+           document.getElementById('shareBtn').addEventListener('click', shareResults);
 
-    document.getElementById('shareBtn').addEventListener('click', shareResults);
-
-
+            resetRound();
+          function stopWorkout() { // stopWorkout *inside* DOMContentLoaded!
+                clearInterval(timerInterval);
+                // ... (rest of your stopWorkout function code)
+                document.getElementById('summary').style.display = 'flex';
+                summaryDisplayed = true; // Set the flag *after* making summary visible
+            }
+         
 function shareResults() {
     const summaryText = document.getElementById('summaryContent').innerText; // Get the text content
-
     // Check if the Web Share API is supported
     if (navigator.share) {
         navigator.share({
@@ -248,8 +265,6 @@ function shareResults() {
     }
 }
 
-
-
 function copyToClipboard(text) {  // Fallback copy function
     const el = document.createElement('textarea');
     el.value = text;
@@ -258,8 +273,6 @@ function copyToClipboard(text) {  // Fallback copy function
     document.execCommand('copy');
     document.body.removeChild(el);
 }
-
-
       // Service worker registration (stays inside DOMContentLoaded if it was there before)
       if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('./sw.js') // Or the correct path
