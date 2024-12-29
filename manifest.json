@@ -1,8 +1,8 @@
-```json
+```
 {
     "name": "CrossFit Timer",
     "short_name": "CF Timer",
-    "start_url": "/index.html", // or "./index.html" if not at root
+    "start_url": "/index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ff9999",
