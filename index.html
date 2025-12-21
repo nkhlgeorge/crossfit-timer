@@ -27,9 +27,43 @@
             padding: 0;
             user-select: none;
         }
-        #timer, #lastRoundTime {
-            font-size: 5vh;
+        #countdownDisplay {
+            font-size: 40vh;
+            line-height: 1;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            display: none;
+            color: #333;
+        }
+        .timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5vh;
             margin-top: 2vh;
+        }
+        .timer-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 4vh;
+        }
+        .timer-label {
+            font-size: 2vh;
+            color: rgba(0, 0, 0, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .timer-value {
+            font-size: 5vh;
+            font-weight: bold;
+        }
+        #lastRoundTime {
+            font-size: 3vh;
+            margin-top: 1vh;
+            color: rgba(0, 0, 0, 0.7);
         }
         #startPrompt {
             font-size: 3vh;
@@ -44,16 +78,27 @@
         }
         button {
             font-size: 1rem;
-            padding: 10px 20px;
+            padding: 12px 24px;
             cursor: pointer;
-            background: none;
-            border: 1px solid rgba(0, 0, 0, 0.5);
-            color: rgba(0, 0, 0, 0.7);
-            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
             transition: all 0.3s ease;
+            font-weight: 500;
         }
         button:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.5);
+        }
+        button:active {
             background-color: rgba(0, 0, 0, 0.1);
+            transform: translateY(1px);
+        }
+        button:disabled {
+            opacity: 0.4;
+            cursor: default;
+            background: rgba(200, 200, 200, 0.3);
         }
         #summary {
             position: fixed;
@@ -61,7 +106,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.95);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -73,27 +118,54 @@
             max-width: 600px;
             width: 100%;
         }
-
-         /*  NEW CSS improvements go here  */
-        button:active {
-            background-color: rgba(0, 0, 0, 0.2);
-            transform: translateY(1px);
+        #summaryContent h2 {
+            margin-bottom: 20px;
         }
-        button:disabled {
-            opacity: 0.5;
-            cursor: default;
+        #summaryContent ul {
+            list-style: none;
+            padding: 0;
         }
-        #roundHistory { /* Assuming you have an element with this ID for round history*/
+        #summaryContent li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .summary-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        #roundHistory {
             max-height: 20vh; 
             overflow-y: auto;
+        }
+        .countdown-active {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
     </style>
 </head>
 <body>
-   <div id="counter">1</div>
-    <div id="timer">00:00</div>
+    <div id="countdownDisplay"></div>
+    <div id="counter">1</div>
+    
+    <div class="timer-container">
+        <div class="timer-row">
+            <div style="text-align: center;">
+                <div class="timer-label">Round Time</div>
+                <div class="timer-value" id="roundTimer">00:00</div>
+            </div>
+            <div style="text-align: center; margin-left: 30px;">
+                <div class="timer-label">Total Time</div>
+                <div class="timer-value" id="timer">00:00</div>
+            </div>
+        </div>
+    </div>
+    
     <div id="lastRoundTime"></div>
-    <div id="startPrompt">Tap anywhere to start</div>
+    <div id="startPrompt">Tap anywhere to start your 10 second countdown</div>
 
     <div class="controls">
         <button id="undoBtn" disabled>Undo</button>
@@ -101,11 +173,12 @@
         <button id="stopBtn" disabled>Stop</button>
     </div>  
 
-
     <div id="summary">  
         <div id="summaryContent"></div>
-        <button id="closeSummaryBtn">Close</button>
-        <button id="shareBtn">Share Results</button>  
+        <div class="summary-buttons">
+            <button id="closeSummaryBtn">Close</button>
+            <button id="shareBtn">Share Results</button>
+        </div>
     </div>
 
     <script>
@@ -115,7 +188,15 @@
         let roundTimes = [];
         let timerInterval;
         let isWorkoutStarted = false;
+        let isCountingDown = false;
+        let countdownInterval;
         const colors = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
+        
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
         
         function updateRound(newRound) {
             round = newRound;
@@ -123,20 +204,48 @@
             document.body.style.backgroundColor = colors[(round - 1) % colors.length];
         }
 
+        function startCountdown() {
+            if (isCountingDown || isWorkoutStarted) return;
+            
+            isCountingDown = true;
+            let countdown = 10;
+            
+            document.getElementById('startPrompt').style.display = 'none';
+            document.getElementById('counter').style.display = 'none';
+            document.getElementById('countdownDisplay').style.display = 'block';
+            document.getElementById('countdownDisplay').classList.add('countdown-active');
+            document.getElementById('countdownDisplay').textContent = countdown;
+            
+            countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    document.getElementById('countdownDisplay').textContent = countdown;
+                } else {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownDisplay').classList.remove('countdown-active');
+                    document.getElementById('countdownDisplay').style.display = 'none';
+                    document.getElementById('counter').style.display = 'block';
+                    isCountingDown = false;
+                    startWorkout();
+                }
+            }, 1000);
+        }
+
         function changeRound() {
+            if (isCountingDown) return;
+            
             if (!isWorkoutStarted) {
-                startWorkout();
+                startCountdown();
             } else {
                 const now = Date.now();
                 const roundTime = (now - lastTapTime) / 1000;
                 roundTimes.push(roundTime);
-                document.getElementById('lastRoundTime').textContent = `Last round: ${roundTime.toFixed(2)}s`;
+                document.getElementById('lastRoundTime').textContent = `Last round: ${formatTime(roundTime)}`;
                 lastTapTime = now;
                 round++;
                 updateRound(round);
+                document.getElementById('undoBtn').disabled = false;
             }
-            document.getElementById('undoBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = false;
         }
 
         function undoRound() {
@@ -146,7 +255,7 @@
                 roundTimes.pop();
                 if (roundTimes.length > 0) {
                     const lastTime = roundTimes[roundTimes.length - 1];
-                    document.getElementById('lastRoundTime').textContent = `Last round: ${lastTime.toFixed(2)}s`;
+                    document.getElementById('lastRoundTime').textContent = `Last round: ${formatTime(lastTime)}`;
                 } else {
                     document.getElementById('lastRoundTime').textContent = '';
                 }
@@ -162,31 +271,35 @@
             lastTapTime = null;
             roundTimes = [];
             isWorkoutStarted = false;
+            isCountingDown = false;
             clearInterval(timerInterval);
+            clearInterval(countdownInterval);
             updateRound(round);
             document.getElementById('timer').textContent = '00:00';
+            document.getElementById('roundTimer').textContent = '00:00';
             document.getElementById('lastRoundTime').textContent = '';
             document.getElementById('undoBtn').disabled = true;
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('startPrompt').style.display = 'block';
+            document.getElementById('countdownDisplay').style.display = 'none';
+            document.getElementById('counter').style.display = 'block';
         }
 
         function startWorkout() {
             isWorkoutStarted = true;
             startTime = Date.now();
             lastTapTime = startTime;
-            document.getElementById('startPrompt').style.display = 'none';
-            timerInterval = setInterval(updateTimer, 1000);
+            timerInterval = setInterval(updateTimer, 100);
             document.getElementById('stopBtn').disabled = false;
         }
 
       
         function updateTimer() {
-            const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            document.getElementById('timer').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const now = Date.now();
+            const totalSeconds = (now - startTime) / 1000;
+            const roundSeconds = (now - lastTapTime) / 1000;
+            document.getElementById('timer').textContent = formatTime(totalSeconds);
+            document.getElementById('roundTimer').textContent = formatTime(roundSeconds);
         }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -207,10 +320,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             document.getElementById('stopBtn').addEventListener('click', (e) => {
                 e.stopPropagation();
-                stopWorkout(); //Call stopWorkout here
+                stopWorkout();
             });
             document.getElementById('summary').addEventListener('click', (e) => {
-                e.stopPropagation(); //Prevent clicks on summary from going to body
+                e.stopPropagation();
             });
 
             
@@ -222,20 +335,22 @@ document.addEventListener('DOMContentLoaded', function() {
            document.getElementById('shareBtn').addEventListener('click', shareResults);
 
             resetRound();
-          function stopWorkout() { 
+          function stopWorkout() {
+                if (!isWorkoutStarted) return;
+                
                 clearInterval(timerInterval);
                 const now = Date.now();
                 const lastRoundTime = (now - lastTapTime) / 1000;  
                 roundTimes.push(lastRoundTime);                  
                 const totalTime = (now - startTime) / 1000;
-                // ... (Generate summaryHTML as corrected in previous response)
-              //  Generate the summaryHTML here:
+                
     let summaryHTML = `<h2>Workout Summary</h2>
-                       <p>Total Time: ${totalTime.toFixed(2)} seconds</p>
+                       <p><strong>Total Time:</strong> ${formatTime(totalTime)}</p>
+                       <p><strong>Rounds Completed:</strong> ${roundTimes.length}</p>
                        <h3>Round Times:</h3>
                        <ul>`;
     for (let i = 0; i < roundTimes.length; i++) {
-        summaryHTML += `<li>Round ${i + 1}: ${roundTimes[i].toFixed(2)} seconds</li>`;
+        summaryHTML += `<li>Round ${i + 1}: ${formatTime(roundTimes[i])}</li>`;
     }
     summaryHTML += `</ul>`;
               
@@ -245,8 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
          
 function shareResults() {
-    const summaryText = document.getElementById('summaryContent').innerText; // Get the text content
-    // Check if the Web Share API is supported
+    const summaryText = document.getElementById('summaryContent').innerText;
     if (navigator.share) {
         navigator.share({
             title: 'My CrossFit Workout Summary',
@@ -255,14 +369,12 @@ function shareResults() {
         .then(() => console.log('Successful share'))
         .catch((error) => console.log('Error sharing', error));
     } else {
-        // Fallback for browsers that don't support Web Share API
         copyToClipboard(summaryText);
         alert('Workout summary copied to clipboard! You can now paste it to share.');
-        // or use a third-party library to do this
     }
 }
 
-function copyToClipboard(text) {  // Fallback copy function
+function copyToClipboard(text) {
     const el = document.createElement('textarea');
     el.value = text;
     document.body.appendChild(el);
@@ -270,14 +382,13 @@ function copyToClipboard(text) {  // Fallback copy function
     document.execCommand('copy');
     document.body.removeChild(el);
 }
-      // Service worker registration (stays inside DOMContentLoaded if it was there before)
       if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js') // Or the correct path
+          navigator.serviceWorker.register('./sw.js')
               .then((reg) => console.log('Service worker registered', reg))
               .catch((err) => console.log('Service worker not registered', err));
       }
 
-  }); // <--- Close the DOMContentLoaded listener
+  });
 </script>
 </body>
 </html>
