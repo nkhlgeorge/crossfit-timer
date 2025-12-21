@@ -19,8 +19,10 @@ The app is served using Python's built-in HTTP server on port 5000.
 
 ## Features
 - Round counter with tap-to-increment
-- Timer tracking
-- Round time history
+- 10-second countdown before workout starts
+- Dual timer display: current round time AND total workout time
+- Round time history (formatted as MM:SS)
 - Workout summary with share functionality
 - Offline support via service worker
 - Color-coded rounds
+- Improved button styling and visual hierarchy
