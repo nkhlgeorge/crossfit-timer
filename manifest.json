@@ -1,8 +1,7 @@
-
 {
     "name": "CrossFit Timer",
     "short_name": "CF Timer",
-    "start_url": "https://nkhlgeorge.github.io/crossfit-timer/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ff9999",
@@ -20,4 +19,3 @@
         }
     ]
 }
-
