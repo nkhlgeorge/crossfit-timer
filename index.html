@@ -7,6 +7,18 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff9999">
 
+    <!-- PostHog Analytics -->
+    <script>
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init('phc_ToJVniZ0u1XU52JhHs9JD7sfj7T4wtV6XZV6ZTcbIua', {
+            api_host: 'https://us.i.posthog.com',
+            person_profiles: 'identified_only',
+            capture_pageview: true,
+            capture_pageleave: true,
+            autocapture: true
+        });
+    </script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -135,7 +147,7 @@
             margin-top: 20px;
         }
         #roundHistory {
-            max-height: 20vh; 
+            max-height: 20vh;
             overflow-y: auto;
         }
         .countdown-active {
@@ -150,7 +162,7 @@
 <body>
     <div id="countdownDisplay"></div>
     <div id="counter">1</div>
-    
+
     <div class="timer-container">
         <div class="timer-row">
             <div style="text-align: center;">
@@ -163,7 +175,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="lastRoundTime"></div>
     <div id="startPrompt">Tap anywhere to start your 10 second countdown</div>
 
@@ -171,9 +183,9 @@
         <button id="undoBtn" disabled>Undo</button>
         <button id="resetBtn">Reset</button>
         <button id="stopBtn" disabled>Stop</button>
-    </div>  
+    </div>
 
-    <div id="summary">  
+    <div id="summary">
         <div id="summaryContent"></div>
         <div class="summary-buttons">
             <button id="closeSummaryBtn">Close</button>
@@ -191,13 +203,13 @@
         let isCountingDown = false;
         let countdownInterval;
         const colors = ['#ff9999', '#99ff99', '#9999ff', '#ffff99', '#ff99ff', '#99ffff'];
-        
+
         function formatTime(totalSeconds) {
             const minutes = Math.floor(totalSeconds / 60);
             const seconds = Math.floor(totalSeconds % 60);
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
-        
+
         function updateRound(newRound) {
             round = newRound;
             document.getElementById('counter').textContent = round;
@@ -206,16 +218,19 @@
 
         function startCountdown() {
             if (isCountingDown || isWorkoutStarted) return;
-            
+
             isCountingDown = true;
             let countdown = 10;
-            
+
+            // Track: user initiated the countdown
+            posthog.capture('countdown_started');
+
             document.getElementById('startPrompt').style.display = 'none';
             document.getElementById('counter').style.display = 'none';
             document.getElementById('countdownDisplay').style.display = 'block';
             document.getElementById('countdownDisplay').classList.add('countdown-active');
             document.getElementById('countdownDisplay').textContent = countdown;
-            
+
             countdownInterval = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
@@ -233,7 +248,7 @@
 
         function changeRound() {
             if (isCountingDown) return;
-            
+
             if (!isWorkoutStarted) {
                 startCountdown();
             } else {
@@ -245,11 +260,20 @@
                 round++;
                 updateRound(round);
                 document.getElementById('undoBtn').disabled = false;
+
+                // Track: each round completion with context
+                posthog.capture('round_completed', {
+                    round_number: round - 1,
+                    round_time_seconds: Math.round(roundTime),
+                    total_rounds_so_far: roundTimes.length,
+                    elapsed_seconds: Math.round((now - startTime) / 1000)
+                });
             }
         }
 
         function undoRound() {
             if (round > 1) {
+                const undoneRoundTime = roundTimes[roundTimes.length - 1];
                 round--;
                 updateRound(round);
                 roundTimes.pop();
@@ -262,10 +286,21 @@
                 if (round === 1) {
                     document.getElementById('undoBtn').disabled = true;
                 }
+
+                // Track: undo action
+                posthog.capture('round_undone', {
+                    undone_round_number: round + 1,
+                    undone_round_time_seconds: Math.round(undoneRoundTime),
+                    remaining_rounds: roundTimes.length
+                });
             }
         }
 
         function resetRound() {
+            const hadWorkoutInProgress = isWorkoutStarted;
+            const roundsAtReset = roundTimes.length;
+            const totalTimeAtReset = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+
             round = 1;
             startTime = null;
             lastTapTime = null;
@@ -283,6 +318,14 @@
             document.getElementById('startPrompt').style.display = 'block';
             document.getElementById('countdownDisplay').style.display = 'none';
             document.getElementById('counter').style.display = 'block';
+
+            // Track: reset (only if a workout was actually in progress)
+            if (hadWorkoutInProgress) {
+                posthog.capture('workout_reset', {
+                    rounds_completed: roundsAtReset,
+                    total_time_seconds: totalTimeAtReset
+                });
+            }
         }
 
         function startWorkout() {
@@ -291,9 +334,12 @@
             lastTapTime = startTime;
             timerInterval = setInterval(updateTimer, 100);
             document.getElementById('stopBtn').disabled = false;
+
+            // Track: workout officially started (after countdown)
+            posthog.capture('workout_started');
         }
 
-      
+
         function updateTimer() {
             const now = Date.now();
             const totalSeconds = (now - startTime) / 1000;
@@ -306,10 +352,10 @@ document.addEventListener('DOMContentLoaded', function() {
      let summaryDisplayed = false;
      document.body.addEventListener('click', (event) => {
                 if (!summaryDisplayed) {
-                    changeRound(); 
+                    changeRound();
                 }
             });
-      
+
           document.getElementById('undoBtn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 undoRound();
@@ -326,10 +372,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.stopPropagation();
             });
 
-            
+
             document.getElementById('closeSummaryBtn').addEventListener('click', () => {
                 document.getElementById('summary').style.display = 'none';
                 summaryDisplayed = false;
+
+                // Track: user closed summary without sharing
+                posthog.capture('summary_closed');
             });
 
            document.getElementById('shareBtn').addEventListener('click', shareResults);
@@ -337,13 +386,28 @@ document.addEventListener('DOMContentLoaded', function() {
             resetRound();
           function stopWorkout() {
                 if (!isWorkoutStarted) return;
-                
+
                 clearInterval(timerInterval);
                 const now = Date.now();
-                const lastRoundTime = (now - lastTapTime) / 1000;  
-                roundTimes.push(lastRoundTime);                  
+                const lastRoundTime = (now - lastTapTime) / 1000;
+                roundTimes.push(lastRoundTime);
                 const totalTime = (now - startTime) / 1000;
-                
+
+                // Calculate stats for tracking
+                const avgRoundTime = roundTimes.reduce((a, b) => a + b, 0) / roundTimes.length;
+                const fastestRound = Math.min(...roundTimes);
+                const slowestRound = Math.max(...roundTimes);
+
+                // Track: workout completed with rich context
+                posthog.capture('workout_stopped', {
+                    total_rounds: roundTimes.length,
+                    total_time_seconds: Math.round(totalTime),
+                    avg_round_time_seconds: Math.round(avgRoundTime),
+                    fastest_round_seconds: Math.round(fastestRound),
+                    slowest_round_seconds: Math.round(slowestRound),
+                    round_times: roundTimes.map(t => Math.round(t))
+                });
+
     let summaryHTML = `<h2>Workout Summary</h2>
                        <p><strong>Total Time:</strong> ${formatTime(totalTime)}</p>
                        <p><strong>Rounds Completed:</strong> ${roundTimes.length}</p>
@@ -353,14 +417,27 @@ document.addEventListener('DOMContentLoaded', function() {
         summaryHTML += `<li>Round ${i + 1}: ${formatTime(roundTimes[i])}</li>`;
     }
     summaryHTML += `</ul>`;
-              
+
                 document.getElementById('summaryContent').innerHTML = summaryHTML;
                 document.getElementById('summary').style.display = 'flex';
                 summaryDisplayed = true;
+
+                // Track: summary viewed
+                posthog.capture('summary_viewed', {
+                    total_rounds: roundTimes.length,
+                    total_time_seconds: Math.round(totalTime)
+                });
             }
-         
+
 function shareResults() {
     const summaryText = document.getElementById('summaryContent').innerText;
+
+    // Track: user shared results
+    posthog.capture('results_shared', {
+        share_method: navigator.share ? 'native_share' : 'clipboard',
+        total_rounds: roundTimes.length
+    });
+
     if (navigator.share) {
         navigator.share({
             title: 'My CrossFit Workout Summary',
