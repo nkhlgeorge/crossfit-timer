@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crossfit-timer-v2'; // You can change the version number if needed
+const CACHE_NAME = 'crossfit-timer-v3'; // You can change the version number if needed
 const assets = [
     './',                // Cache the root (important for relative paths)
     './index.html',
