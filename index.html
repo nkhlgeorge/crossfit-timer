@@ -31,6 +31,18 @@
             transition: background-color 0.3s;
             overflow: hidden;
         }
+        #roundsLabel {
+            font-size: 2vh;
+            color: rgba(0, 0, 0, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5vh;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #roundsLabel.visible {
+            opacity: 1;
+        }
         #counter {
             font-size: 40vh;
             line-height: 1;
@@ -349,7 +361,8 @@
     </div>
 
     <div id="countdownDisplay"></div>
-    <div id="counter">1</div>
+    <div id="roundsLabel">Rounds completed</div>
+    <div id="counter">0</div>
 
     <div class="timer-container">
         <div class="timer-row">
@@ -382,7 +395,7 @@
     </div>
 
     <script>
-        let round = 1;
+        let round = 0;
         let startTime;
         let lastTapTime;
         let roundTimes = [];
@@ -401,7 +414,12 @@
         function updateRound(newRound) {
             round = newRound;
             document.getElementById('counter').textContent = round;
-            document.body.style.backgroundColor = colors[(round - 1) % colors.length];
+            document.body.style.backgroundColor = colors[round % colors.length];
+            if (round >= 1) {
+                document.getElementById('roundsLabel').classList.add('visible');
+            } else {
+                document.getElementById('roundsLabel').classList.remove('visible');
+            }
         }
 
         function startCountdown() {
@@ -460,7 +478,7 @@
         }
 
         function undoRound() {
-            if (round > 1) {
+            if (round > 0) {
                 const undoneRoundTime = roundTimes[roundTimes.length - 1];
                 round--;
                 updateRound(round);
@@ -471,7 +489,7 @@
                 } else {
                     document.getElementById('lastRoundTime').textContent = '';
                 }
-                if (round === 1) {
+                if (round === 0) {
                     document.getElementById('undoBtn').disabled = true;
                 }
 
@@ -489,7 +507,7 @@
             const roundsAtReset = roundTimes.length;
             const totalTimeAtReset = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
 
-            round = 1;
+            round = 0;
             startTime = null;
             lastTapTime = null;
             roundTimes = [];
