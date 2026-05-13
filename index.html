@@ -90,14 +90,10 @@
             color: rgba(0, 0, 0, 0.7);
         }
         #startPrompt {
-            position: fixed;
-            top: 22px;
-            left: 0;
-            right: 160px;
-            text-align: center;
-            font-size: 2vh;
+            font-size: 2.2vh;
             color: rgba(0, 0, 0, 0.55);
-            pointer-events: none;
+            text-align: center;
+            margin-bottom: 1vh;
         }
         .controls {
             position: absolute;
@@ -290,6 +286,7 @@
 
     <div id="countdownDisplay"></div>
     <div id="roundsLabel">Rounds completed</div>
+    <div id="startPrompt">Tap anywhere to start your 10 second countdown</div>
     <div id="counter">0</div>
 
     <div class="timer-container">
@@ -306,7 +303,6 @@
     </div>
 
     <div id="lastRoundTime"></div>
-    <div id="startPrompt">Tap anywhere to start your 10 second countdown</div>
 
     <div class="controls">
         <button id="undoBtn" disabled>Undo</button>

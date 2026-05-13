@@ -1,52 +1,43 @@
-const CACHE_NAME = 'crossfit-timer-v4'; // You can change the version number if needed
-const assets = [
-    './',                // Cache the root (important for relative paths)
-    './index.html',
+const CACHE_NAME = 'crossfit-timer-v6';
+const STATIC_ASSETS = [
     './manifest.json',
-    './icon-192.png',   // Add any other assets (images, CSS, etc.)
+    './icon-192.png',
     './icon-512.png'
 ];
 
 self.addEventListener('install', event => {
-    console.log('Service worker installing...'); // Debugging
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Caching assets...'); // Debugging
-                return cache.addAll(assets);
-            })
+        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
     );
+    self.skipWaiting();
 });
 
-
-self.addEventListener('activate', (event) => {
-    console.log('Activating service worker...');
+self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.filter(cacheName => cacheName !== CACHE_NAME)
-                    .map(cacheName => caches.delete(cacheName))
-            );
-        })
-    )
-})
+        caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+        )
+    );
+    self.clients.claim();
+});
 
 self.addEventListener('fetch', event => {
-    console.log(`Fetching: ${event.request.url}`); // Debugging
-    event.respondWith(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.match(event.request).then(response => {
-                if (response) {
-                    console.log('Serving from cache:', event.request.url); // Debugging
-                    return response;
-                }
+    const url = new URL(event.request.url);
 
-                console.log('Fetching from network:', event.request.url); // Debugging
-                var fetchPromise = fetch(event.request).then(networkResponse => {
-                    cache.put(event.request, networkResponse.clone()); // Update cache
-                    return networkResponse;                           // Return network response
+    if (event.request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname === '/') {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match('./index.html'))
+        );
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request).then(cached => {
+            return cached || fetch(event.request).then(response => {
+                return caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, response.clone());
+                    return response;
                 });
-                return fetchPromise;
             });
         })
     );
