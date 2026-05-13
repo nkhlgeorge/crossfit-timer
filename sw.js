@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crossfit-timer-v6';
+const CACHE_NAME = 'crossfit-timer-v7';
 const STATIC_ASSETS = [
     './manifest.json',
     './icon-192.png',

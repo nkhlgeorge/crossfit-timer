@@ -23,19 +23,42 @@
     </script>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            min-height: 100dvh;
             margin: 0;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
             transition: background-color 0.3s;
             overflow: hidden;
         }
+        .center-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            /* leave room at top for the share button */
+            padding-top: 48px;
+        }
+        .bottom-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
+            gap: 8px;
+        }
         #roundsLabel {
-            font-size: 2vh;
+            font-size: clamp(10px, 2vh, 16px);
             color: rgba(0, 0, 0, 0.6);
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -47,7 +70,7 @@
             opacity: 1;
         }
         #counter {
-            font-size: 40vh;
+            font-size: clamp(80px, 30vmin, 38vh);
             line-height: 1;
             text-align: center;
             margin: 0;
@@ -55,7 +78,7 @@
             user-select: none;
         }
         #countdownDisplay {
-            font-size: 40vh;
+            font-size: clamp(80px, 30vmin, 38vh);
             line-height: 1;
             text-align: center;
             margin: 0;
@@ -68,41 +91,37 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.5vh;
-            margin-top: 2vh;
+            gap: 2px;
         }
         .timer-row {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 4vh;
         }
         .timer-label {
-            font-size: 2vh;
+            font-size: clamp(9px, 1.6vh, 14px);
             color: rgba(0, 0, 0, 0.6);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         .timer-value {
-            font-size: 5vh;
+            font-size: clamp(22px, 4.5vh, 40px);
             font-weight: bold;
         }
         #lastRoundTime {
-            font-size: 3vh;
-            margin-top: 1vh;
+            font-size: clamp(12px, 2.5vh, 22px);
             color: rgba(0, 0, 0, 0.7);
         }
         #startPrompt {
-            font-size: 2.2vh;
+            font-size: clamp(11px, 2vh, 18px);
             color: rgba(0, 0, 0, 0.55);
             text-align: center;
             margin-bottom: 1vh;
+            padding: 0 16px;
         }
         .controls {
-            position: absolute;
-            bottom: 5vh;
             display: flex;
-            gap: 20px;
+            gap: 16px;
         }
         button {
             font-size: 1rem;
@@ -287,30 +306,34 @@
         </div>
     </div>
 
-    <div id="countdownDisplay"></div>
-    <div id="roundsLabel">Rounds completed</div>
-    <div id="startPrompt">Tap anywhere to start your 10 second countdown</div>
-    <div id="counter">0</div>
-
-    <div class="timer-container">
-        <div class="timer-row">
-            <div style="text-align: center;">
-                <div class="timer-label">Round Time</div>
-                <div class="timer-value" id="roundTimer">00:00</div>
-            </div>
-            <div style="text-align: center; margin-left: 30px;">
-                <div class="timer-label">Total Time</div>
-                <div class="timer-value" id="timer">00:00</div>
-            </div>
-        </div>
+    <div class="center-area">
+        <div id="countdownDisplay"></div>
+        <div id="roundsLabel">Rounds completed</div>
+        <div id="startPrompt">Tap anywhere to start your 10 second countdown</div>
+        <div id="counter">0</div>
     </div>
 
-    <div id="lastRoundTime"></div>
+    <div class="bottom-area">
+        <div class="timer-container">
+            <div class="timer-row">
+                <div style="text-align: center;">
+                    <div class="timer-label">Round Time</div>
+                    <div class="timer-value" id="roundTimer">00:00</div>
+                </div>
+                <div style="text-align: center; margin-left: 30px;">
+                    <div class="timer-label">Total Time</div>
+                    <div class="timer-value" id="timer">00:00</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="controls">
-        <button id="undoBtn" disabled>Undo</button>
-        <button id="resetBtn">Reset</button>
-        <button id="stopBtn" disabled>Stop</button>
+        <div id="lastRoundTime"></div>
+
+        <div class="controls">
+            <button id="undoBtn" disabled>Undo</button>
+            <button id="resetBtn">Reset</button>
+            <button id="stopBtn" disabled>Stop</button>
+        </div>
     </div>
 
     <div id="summary">
