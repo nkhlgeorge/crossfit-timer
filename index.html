@@ -679,7 +679,7 @@ function copyToClipboard(text) {
           e.stopPropagation();
           dropdown.classList.remove('open');
 
-          const url = window.location.href.split('?')[0].split('#')[0];
+          const url = 'https://nkhlgeorge.github.io/crossfit-timer/';
           const encodedUrl = encodeURIComponent(url);
           qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodedUrl}`;
           qrUrlEl.textContent = url;
